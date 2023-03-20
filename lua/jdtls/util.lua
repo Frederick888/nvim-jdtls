@@ -1,8 +1,10 @@
 local api = vim.api
 local M = {}
 
+local coc = require('jdtls.coc')
 
-function M.execute_command(command, callback, bufnr)
+
+function M.execute_command(command, callback, bufnr, coc_fallback)
   local clients = {}
   local candidates = bufnr and vim.lsp.buf_get_clients(bufnr) or vim.lsp.get_active_clients()
   for _, c in pairs(candidates) do
@@ -11,6 +13,9 @@ function M.execute_command(command, callback, bufnr)
     if vim.tbl_contains(commands, command.command) then
       table.insert(clients, c)
     end
+  end
+  if coc_fallback and coc.is_enabled() then
+    table.insert(clients, coc.client)
   end
   local num_clients = vim.tbl_count(clients)
   if num_clients == 0 then
@@ -58,7 +63,7 @@ function M.with_java_executable(mainclass, project, fn, bufnr)
     else
       fn(java_exec)
     end
-  end, bufnr)
+  end, bufnr, true)
 end
 
 

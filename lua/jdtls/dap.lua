@@ -3,6 +3,7 @@
 local api = vim.api
 local uv = vim.loop
 local util = require('jdtls.util')
+local coc = require('jdtls.coc')
 local resolve_classname = util.resolve_classname
 local with_java_executable = util.with_java_executable
 local M = {}
@@ -21,7 +22,7 @@ local function fetch_needs_preview(mainclass, project, cb, bufnr)
   util.execute_command(params, function(err, use_preview)
     assert(not err, err and (err.message or vim.inspect(err)))
     cb(use_preview)
-  end, bufnr)
+  end, bufnr, true)
 end
 
 
@@ -67,9 +68,9 @@ local function enrich_dap_config(config_, on_config)
           paths[2]
         )
         on_config(config)
-      end, bufnr)
+      end, bufnr, true)
     end, bufnr)
-  end, bufnr)
+  end, bufnr, true)
 end
 
 
@@ -90,7 +91,7 @@ local function start_debug_adapter(callback, config)
       port = port;
       enrich_config = enrich_dap_config;
     })
-  end, bufnr)
+  end, bufnr, true)
 end
 
 
@@ -186,6 +187,10 @@ local function fetch_candidates(context, on_candidates)
       break
     end
   end
+  if client == nil and coc.is_enabled() then
+    params.command = cmd_find_tests
+    client = coc.client
+  end
   if not client then
     local msg = (
       'No LSP client found that supports resolving possible test cases. '
@@ -256,9 +261,9 @@ local function fetch_launch_args(lens, context, on_launch_args)
         assert(not err1, vim.inspect(err1))
         launch_args.classpath = merge_unique(launch_args.classpath, resp.classpaths)
         on_launch_args(launch_args)
-      end, context.bufnr)
+      end, context.bufnr, true)
     end
-  end, context.bufnr)
+  end, context.bufnr, true)
 end
 
 
@@ -558,11 +563,11 @@ function M.fetch_main_configs(opts, callback)
             if remaining == 0 then
               callback(configurations)
             end
-          end, bufnr)
+          end, bufnr, true)
         end, bufnr)
       end, bufnr)
     end
-  end, bufnr)
+  end, bufnr, true)
 end
 
 ---@class JdtMainConfigOpts
